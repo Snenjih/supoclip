@@ -18,7 +18,7 @@ services:
         - NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST=${NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST:-false}
     container_name: supoclip-frontend
     ports:
-      - "127.0.0.1:3001:3107"
+      - "127.0.0.1:3333:3107"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
@@ -276,6 +276,37 @@ services:
       timeout: 10s
       retries: 3
 
+  # Local LLM runtime for AI clip selection without a cloud API key.
+  # Opt-in: `docker-compose --profile local-llm up -d` (or add `local-llm` to
+  # COMPOSE_PROFILES). Set LLM=ollama:<model> to use it.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: supoclip-ollama
+    profiles: ["local-llm"]
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # One-shot job that pulls the configured model into the ollama volume on
+  # first start, so `LLM=ollama:<model>` works without a manual `ollama pull`.
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: supoclip-ollama-pull
+    profiles: ["local-llm"]
+    entrypoint: ["sh", "-c", "ollama pull \"${OLLAMA_MODEL:-llama3.1:8b}\""]
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
   # PostgreSQL database for storing video metadata, user data, etc.
   postgres:
     image: postgres:15-alpine
@@ -302,6 +333,8 @@ volumes:
   redis_data:
     driver: local
   postgres_data:
+    driver: local
+  ollama_data:
     driver: local
   mcp_downloads:
     driver: local

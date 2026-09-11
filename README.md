@@ -83,6 +83,8 @@ docker-compose up -d
 
 First startup takes a few minutes; watch it with `docker-compose logs -f`. Once healthy, open [http://localhost:3000](http://localhost:3000), create an account, and start clipping. The backend API lives at [http://localhost:8000](http://localhost:8000) with interactive docs at `/docs`.
 
+Prefer to run with zero cloud API keys? Set `TRANSCRIPTION_PROVIDER=whisper` and `LLM=ollama:llama3.1:8b`, then start with `docker-compose --profile local-llm up -d` to also spin up a bundled Ollama service with the model pulled automatically. See [Fully local, zero-API-key setup](docs/configuration.md#fully-local-zero-api-key-setup) for details.
+
 To use a different LLM provider, self-host with Ollama, or configure the optional pieces (B-roll, analytics, emails, YouTube metadata), see the [configuration guide](docs/configuration.md). If something misbehaves, the [troubleshooting guide](docs/troubleshooting.md) covers the common failure modes.
 
 ## Documentation

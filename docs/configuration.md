@@ -35,8 +35,18 @@ In most cases, edit `.env` and then rebuild or restart the stack.
 | `ANTHROPIC_API_KEY` | If using Anthropic | Required for `anthropic:*` models |
 | `OLLAMA_BASE_URL` | If using Ollama remotely | Base URL for Ollama-compatible endpoints |
 | `OLLAMA_API_KEY` | Optional | Used for hosted Ollama providers such as Ollama Cloud |
+| `OLLAMA_MODEL` | Used by the `local-llm` compose profile | Model the `ollama-pull` service fetches automatically on first start |
 
 The backend can infer a default LLM from whichever API key is present, but setting `LLM` explicitly is safer and easier to debug.
+
+### Fully local, zero-API-key setup
+
+Both cloud dependencies can be replaced with local equivalents that ship in this repo:
+
+- Transcription: set `TRANSCRIPTION_PROVIDER=whisper` (uses the bundled `openai-whisper` package; no `ASSEMBLY_AI_API_KEY` needed). Trade-off: no speaker diarization, unlike AssemblyAI.
+- LLM: set `LLM=ollama:<model>` with `OLLAMA_BASE_URL=http://ollama:11434/v1`, then run `docker-compose --profile local-llm up -d`. This starts a bundled `ollama` service and a one-shot `ollama-pull` job that fetches `OLLAMA_MODEL` (default `llama3.1:8b`) automatically.
+
+With both set, the download → transcribe → AI segment selection → render pipeline runs entirely on your machine with no external API keys. Optional features (Pexels B-roll, YouTube Data API metadata, Apify downloads) stay disabled unless their keys are set.
 
 ## Core Application Settings
 
