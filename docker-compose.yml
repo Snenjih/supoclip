@@ -18,7 +18,7 @@ services:
         - NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST=${NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST:-false}
     container_name: supoclip-frontend
     ports:
-      - "127.0.0.1:3333:3107"
+      - "127.0.0.1:3020:3107"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
