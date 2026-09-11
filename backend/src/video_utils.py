@@ -14,6 +14,7 @@ import uuid
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 
 import cv2
@@ -227,6 +228,7 @@ def _assemblyai_speech_models_value(speech_model: str) -> List[str]:
 
 
 _WHISPER_MODEL_CACHE: Dict[str, Any] = {}
+_WHISPER_LOCK = threading.Lock()
 
 
 def _get_whisper_model(model_name: str = "base"):
@@ -244,9 +246,13 @@ def _get_whisper_model(model_name: str = "base"):
 def transcribe_with_whisper(video_path: Path, model_name: str = "base") -> Dict[str, Any]:
     """Transcribe video using local Whisper with word-level timestamps."""
     audio_path = _prepare_audio_for_transcription(video_path)
-    model = _get_whisper_model(model_name)
     logger.info("Starting Whisper transcription with model: %s", model_name)
-    return model.transcribe(str(audio_path), word_timestamps=True, language=None)
+    # Whisper's model.transcribe() is not re-entrant: it installs kv_cache hooks
+    # on the shared model's layers, so concurrent calls on the same cached model
+    # instance race and corrupt each other's cache. Serialize access.
+    with _WHISPER_LOCK:
+        model = _get_whisper_model(model_name)
+        return model.transcribe(str(audio_path), word_timestamps=True, language=None)
 
 
 def _whisper_result_to_transcript_data(whisper_result: Dict[str, Any]) -> Dict[str, Any]:
